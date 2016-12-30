@@ -3,7 +3,7 @@ command to start script:
 `./backuprsync.sh -u=root -s=CLIENT_IP_OR_FQDN --backupfs=rsyncbackup-root -t=rsync --password=XXXXXX `
 # config rsync daemon:
 **/etc/rsyncd.conf**
-`use chroot = yes
+use chroot = yes
 max connections = 4
 pid file = /var/run/rsyncd.pid
 exclude = lost+found/
@@ -21,14 +21,14 @@ path = /
 uid = root
 gid = root
 hosts allow = SERVER_IP
-hosts deny = *`
+hosts deny = *
 
 **/etc/rsyncd.secrets**
-`root:XXXXXX`
+root:XXXXXX
 
 
 # example use over ssh protocol:
-`./backuprsync.sh -u=rsyncbackupuser -s=10.20.30.4 -p=22 -k=/root/.ssh/id_rsa --backupfs=/,/srv/docker`
+./backuprsync.sh -u=rsyncbackupuser -s=10.20.30.4 -p=22 -k=/root/.ssh/id_rsa --backupfs=/,/srv/docker
 
 1. on client need create rsyncbackupuser
 2. and add sudo permissions to run sudo rsync
