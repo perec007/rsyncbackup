@@ -4,7 +4,9 @@ command to start script:
 $ ./backuprsync.sh -u=root -s=CLIENT_IP_OR_FQDN --backupfs=rsyncbackup-root -t=rsync --password=XXXXXX
 ### config rsync daemon:
 ***cat /etc/rsyncd.conf***
-```use chroot = yes
+
+```
+use chroot = yes
 max connections = 4
 pid file = /var/run/rsyncd.pid
 exclude = lost+found/
