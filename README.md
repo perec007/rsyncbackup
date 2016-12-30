@@ -17,7 +17,7 @@ dont compress   = *.gz *.tgz *.zip *.z *.Z *.rpm *.deb *.bz2
 secrets file = /etc/rsyncd.secrets 
 auth users = root
 list = true
-```
+
 [rsyncbackup-root]
 read only = true
 path = /
@@ -25,21 +25,31 @@ uid = root
 gid = root
 hosts allow = SERVER_IP
 hosts deny = *
+```
 
 ***/etc/rsyncd.secrets***
 
+```
 root:XXXXXX
-
+```
 
 ### example use over ssh protocol:
 command to start
-./backuprsync.sh -u=rsyncbackupuser -s=10.20.30.4 -p=22 -k=/root/.ssh/id_rsa --backupfs=/,/srv/docker
 
+```
+./backuprsync.sh -u=rsyncbackupuser -s=10.20.30.4 -p=22 -k=/root/.ssh/id_rsa --backupfs=/,/srv/docker
+```
+Need settings:
+
+```
 - on client need create rsyncbackupuser
 - and add sudo permissions to run sudo rsync
 - add open rsa ssh key to auth
+```
 
 ## help
+
+```
 params:     protocol: description:
 -t|--type   ssh|rsync type protocol
 -u|--user   ssh|rsync username (if remote)
@@ -49,4 +59,4 @@ params:     protocol: description:
 -k|-key     ssh|      ssh key auth
 --backupfs  ssh|rsync filesystem over coma e.q. /,/boot, if rsync type - backupfs is modulename cfg file
 --exclude   ssh|rsync path file to excludefile--extparam  ssh|rsync external params to rsync
-
+```
