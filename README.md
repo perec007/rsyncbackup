@@ -1,9 +1,11 @@
-### example use over rsync protocol:
+### example use over rsync protocol
 command to start script:
 
 $ ./backuprsync.sh -u=root -s=CLIENT_IP_OR_FQDN --backupfs=rsyncbackup-root -t=rsync --password=XXXXXX
 ### config rsync daemon:
 ***cat /etc/rsyncd.conf***
+
+```
 use chroot = yes
 max connections = 4
 pid file = /var/run/rsyncd.pid
@@ -23,21 +25,31 @@ uid = root
 gid = root
 hosts allow = SERVER_IP
 hosts deny = *
+```
 
 ***/etc/rsyncd.secrets***
 
+```
 root:XXXXXX
+```
 
+### example use over ssh protocol
+command to start:
 
-### example use over ssh protocol:
-command to start
+```
 ./backuprsync.sh -u=rsyncbackupuser -s=10.20.30.4 -p=22 -k=/root/.ssh/id_rsa --backupfs=/,/srv/docker
+```
+Need settings:
 
+```
 - on client need create rsyncbackupuser
 - and add sudo permissions to run sudo rsync
 - add open rsa ssh key to auth
+```
 
 ## help
+
+```
 params:     protocol: description:
 -t|--type   ssh|rsync type protocol
 -u|--user   ssh|rsync username (if remote)
@@ -47,4 +59,4 @@ params:     protocol: description:
 -k|-key     ssh|      ssh key auth
 --backupfs  ssh|rsync filesystem over coma e.q. /,/boot, if rsync type - backupfs is modulename cfg file
 --exclude   ssh|rsync path file to excludefile--extparam  ssh|rsync external params to rsync
-
+```
