@@ -7,43 +7,33 @@ do
 case $i in
     -u=*|--user=*)
     user="${i#*=}"
-    shift # past argument=value
     ;;
     -s=*|--server=*)
     server="${i#*=}"
-    shift # past argument=value
     ;;
     -p=*|--port=*)
     port="${i#*=}"
-    shift # past argument=value
     ;;
     -k=*|--key=*)
     key="${i#*=}"
-    shift # past argument with no value
     ;;
     --backupfs=*)
       backupfs="${i#*=}"
-      shift
     ;;
     -t=*|--type=*)
       type="${i#*=}"
-      shift
     ;;
-    -e=*|--extparam=*)
-      extparam="${i#*=}"
-      shift
+    -e=*|--ext=*)
+      ext="${i#*=}"
     ;;
     --password=*)
       password="${i#*=}"
-      shift
     ;;
     --savepath=*)
       savepath="${i#*=}"
-      shift
     ;;
     -h|--help)
       help=1
-      shift
     ;;
 
     *)
@@ -54,29 +44,29 @@ done
 
 printhelp() {
 cat << EOF
-params:     protocol: description:                                         
--t|--type   ssh|rsync type protocol                                            
--u|--user   ssh|rsync username (if remote)                                         
--s|--server ssh|rsync servername set local if backup localhost filesystem                                          
--p|--port   ssh|rsync if remote; ssh or rsyncd port                                            
---password     |rsync rsync auth password
--k|-key     ssh|      ssh key auth                                         
---backupfs  ssh|rsync filesystem over coma e.q. /,/boot, if rsync type - backupfs is modulename cfg file                                         
---exclude   ssh|rsync path file to excludefile                                         
---extparam  ssh|rsync external params to rsync
---savepath  ssh|rsync path to local backup dir
+params:     protocol: need: description:                                         
+-t|--type   ssh|rsync yes   type protocol                                            
+-u|--user   ssh|rsync no    username (if remote)                                         
+-s|--server ssh|rsync yes   servername set local if backup localhost filesystem                                          
+-p|--port   ssh|rsync no    if remote; ssh or rsyncd port                                            
+--password     |rsync no    rsync auth password
+-k|-key     ssh|      no    ssh key auth                                         
+--backupfs  ssh|rsync yes   filesystem over coma e.q. /,/boot, if rsync type - backupfs is modulename cfg file                                         
+--exclude   ssh|rsync no    path file to excludefile                                         
+-e|--ext    ssh|rsync no    external params to rsync
+--savepath  ssh|rsync yes   path to local backup dir
+-h|--help   ssh|rsync no    print this help
 EOF
 exit 
 }
 
 [[ $help -eq 1 ]] && printhelp
-if [[ "$server" == "" || "$backupfs" == "" ]]; then
-        echo Need params!
-        printhelp
+if [[ "$server" == "" || "$backupfs" == "" || -z $savepath || -z $backupfs || -z $server || -z type ]]; then
+        echo Need mandatory params! Use --help options.
         exit 1
 fi
 
-savepath=/srv/bacula/rsyncbackup
+
 date=`date +%F--%H-%M`
 
 for backup in `echo $backupfs | sed "s/,/\ /g"`; do
@@ -98,7 +88,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids --partial \
                 --exclude="/var/lib/docker/*" --exclude='*/.cache/*' --exclude='*/Cache/*' \
-                $extparam 2> $savepath/$server/log/rsync-error-$fs-$date.log
+                $ext 2> $savepath/$server/log/rsync-error-$fs-$date.log
         ;;
         "rsync")
             export RSYNC_PASSWORD="$password"
@@ -106,7 +96,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids --partial \
                 --exclude="/var/lib/docker/*" --exclude='*/.cache/*' --exclude='*/Cache/*' \
-                $extparam 2> $savepath/$server/log/rsync-error-$fs-$date.log
+                $ext 2> $savepath/$server/log/rsync-error-$fs-$date.log
         ;;
     esac
     if [ $? -ne 0 ]; then
