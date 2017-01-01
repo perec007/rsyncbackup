@@ -79,7 +79,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     if [ $backup == "/" ]; then
         fs=root
     else
-        fs=`echo $backup | sed "s,/,-,g; s,^-,,g"`
+        fs=`echo $backup | sed "s,/,-,g; s,^-,/,g"; s,-$,/,g"`
     fi
     # [[ "$type" == "ssh" && $server == "local" ]] && backupsrv="" || backupsrv="$user@$server:" 
     [[ $server == "local" ]] && backupsrv="" || backupsrv="$user@$server:" 
