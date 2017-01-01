@@ -79,7 +79,8 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     if [ $backup == "/" ]; then
         fs=root
     else
-        fs=`echo $backup | sed "s,/,-,g; s,^-,/,g"; s,-$,/,g"`
+        echo $backup
+        fs=`echo $backup | sed "s,/,-,g; s,^-,/,g; s,-$,/,g"`
     fi
     # [[ "$type" == "ssh" && $server == "local" ]] && backupsrv="" || backupsrv="$user@$server:" 
     [[ $server == "local" ]] && backupsrv="" || backupsrv="$user@$server:" 
@@ -95,7 +96,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids --partial \
                 --exclude="/var/lib/docker/*" --exclude='*/.cache/*' --exclude='*/Cache/*' \
-                $ext 2> $savepath/$fservername/log/rsync-error-$fs-$date.log
+                $ext 2> $savepath/$fservername/log/errors-$fservername-$fs-$date.log
         ;;
         "rsync")
             export RSYNC_PASSWORD="$password"
@@ -103,18 +104,18 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids --partial \
                 --exclude="/var/lib/docker/*" --exclude='*/.cache/*' --exclude='*/Cache/*' \
-                $ext 2> $savepath/$fservername/log/rsync-error-$fs-$date.log
+                $ext 2> $savepath/$fservername/log/errors-$fservername-$fs-$date.log
         ;;
     esac
     if [ $? -ne 0 ]; then
-      echo exit 'Exit rsync code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fs-$date.log 
+      echo exit 'Exit rsync code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
       echo "$date rsync error on $fs $backupsrv$backup" >> $savepath/reporterror.log
     fi
     printf "%s" "done. "
     printf "%s" "start cp... "
-    cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>> $savepath/$fservername/log/errors-$fs-$date.log 
+    cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>> $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
     if [ $? -ne 0 ]; then
-      echo exit 'Exit cp code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fs-$date.log 
+      echo exit 'Exit cp code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
       echo "$date cp error on $fs $backupsrv$backup" >> $savepath/reporterror.log
     fi
     printf "%s\n" "done. "
