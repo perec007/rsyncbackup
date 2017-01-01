@@ -34,6 +34,7 @@ case $i in
     ;;
     --prefix=*)
       prefix="${i#*=}"
+    ;;
     "--sudo=yes")
       sudo="sudo -E"
 	;;
