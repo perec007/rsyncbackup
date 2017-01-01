@@ -34,6 +34,8 @@ case $i in
     ;;
     --prefix=*)
       prefix="${i#*=}"
+    "--sudo=yes")
+      sudo="sudo -E"
 	;;
     -h|--help)
       help=1
@@ -48,18 +50,19 @@ done
 printhelp() {
 cat << EOF
 params:     protocol: need: description:                                         
--t|--type   ssh|rsync yes   type protocol                                            
--u|--user   ssh|rsync no    username (if remote)                                         
+-t|--type   ssh|rsync yes   type protocol                                          
+-u|--user   ssh|rsync yes    username (if remote)                                         
 -s|--server ssh|rsync yes   servername set local if backup localhost filesystem 
 -prefix     ssh|rsync no    prefix servername - need to human readable save path
--p|--port   ssh|rsync no    if remote; ssh or rsyncd port                                            
+-p|--port   ssh|      yes   if remote; ssh or rsyncd port                                            
 --password     |rsync no    rsync auth password
--k|-key     ssh|      no    ssh key auth                                         
+-k|-key     ssh|      yes   ssh key auth                                         
 --backupfs  ssh|rsync yes   filesystem over coma e.q. /,/boot, if rsync type - backupfs is modulename cfg file                                         
 --exclude   ssh|rsync no    path file to excludefile                                         
 -e|--ext    ssh|rsync no    external params to rsync
 --savepath  ssh|rsync yes   path to local backup dir
 -h|--help   ssh|rsync no    print this help
+--sudo      ssh|      no    Set yes if need use local sudo rsync
 EOF
 exit 
 }
@@ -80,18 +83,25 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
         fs=root
     else
         echo $backup
-        fs=`echo $backup | sed "s,/,-,g; s,^-,/,g; s,-$,/,g"`
+        fs=`echo $backup | sed "s,/,-,g; s,^-,,g; s,-$,,g"`
     fi
-    # [[ "$type" == "ssh" && $server == "local" ]] && backupsrv="" || backupsrv="$user@$server:" 
-    [[ $server == "local" ]] && backupsrv="" || backupsrv="$user@$server:" 
-    mkdir -p $savepath/$fservername/latest-$fs $savepath/$fservername/log $savepath/$fservername/$fs-$date
-    touch $savepath/reporterror.log
 
     printf "%s" "start backup $fs on $fservername:"
     printf "%s" "start type:$type rsync..."
+
+    if [ $server == "local" ]; then
+      backupsrv="" 
+      type=ssh
+    else
+      backupsrv="$user@$server:" 
+    fi
+
+    mkdir -p $savepath/$fservername/latest-$fs $savepath/$fservername/log $savepath/$fservername/$fs-$date
+    touch $savepath/reporterror.log
+
     case $type in 
         "ssh")
-            rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
+            $sudo rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
                 -e "ssh -p $port -i $key" --rsync-path="sudo rsync" \
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids --partial \
@@ -100,7 +110,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
         ;;
         "rsync")
             export RSYNC_PASSWORD="$password"
-            rsync $backupsrv:$backup $savepath/$fservername/latest-$fs \
+            $sudo rsync $backupsrv:$backup $savepath/$fservername/latest-$fs \
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids --partial \
                 --exclude="/var/lib/docker/*" --exclude='*/.cache/*' --exclude='*/Cache/*' \
