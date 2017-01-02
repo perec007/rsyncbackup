@@ -1,7 +1,6 @@
 #!/bin/bash
 
 
-
 for i in "$@"
 do
 case $i in
@@ -19,6 +18,9 @@ case $i in
     ;;
     --backupfs=*)
       backupfs="${i#*=}"
+    ;;
+    --exclude=*)
+      exclude="--delete-excluded --exclude-from=${i#*=}"
     ;;
     -t=*|--type=*)
       type="${i#*=}"
@@ -52,7 +54,7 @@ printhelp() {
 cat << EOF
 params:     protocol: need: description:                                         
 -t|--type   ssh|rsync yes   type protocol                                          
--u|--user   ssh|rsync yes    username (if remote)                                         
+-u|--user   ssh|rsync yes   username (if remote)                                         
 -s|--server ssh|rsync yes   servername set local if backup localhost filesystem 
 -prefix     ssh|rsync no    prefix servername - need to human readable save path
 -p|--port   ssh|      yes   if remote; ssh or rsyncd port                                            
@@ -83,7 +85,6 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     if [ $backup == "/" ]; then
         fs=root
     else
-        echo $backup
         fs=`echo $backup | sed "s,/,-,g; s,^-,,g; s,-$,,g"`
     fi
 
@@ -106,7 +107,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 -e "ssh -p $port -i $key" --rsync-path="sudo rsync" \
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids --partial \
-                --exclude="/var/lib/docker/*" --exclude='*/.cache/*' --exclude='*/Cache/*' \
+                $exclude \
                 $ext 2> $savepath/$fservername/log/errors-$fservername-$fs-$date.log
         ;;
         "rsync")
@@ -114,10 +115,11 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
             $sudo rsync $backupsrv:$backup $savepath/$fservername/latest-$fs \
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids --partial \
-                --exclude="/var/lib/docker/*" --exclude='*/.cache/*' --exclude='*/Cache/*' \
+                $exclude \
                 $ext 2> $savepath/$fservername/log/errors-$fservername-$fs-$date.log
         ;;
     esac
+    du -s $savepath/$fservername/latest-$fs/ > $savepath/$fservername/log/du-latest-$fs.log
     if [ $? -ne 0 ]; then
       echo exit 'Exit rsync code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
       echo "$date rsync error on $fs $backupsrv$backup" >> $savepath/reporterror.log
@@ -125,6 +127,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     printf "%s" "done. "
     printf "%s" "start cp... "
     cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>> $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
+    du -s $savepath/$fservername/$fs-$date/ > $savepath/$fservername/log/du-$fs-$date.log
     if [ $? -ne 0 ]; then
       echo exit 'Exit cp code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
       echo "$date cp error on $fs $backupsrv$backup" >> $savepath/reporterror.log
