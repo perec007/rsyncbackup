@@ -38,9 +38,15 @@ if [[ -z $max || -z $fs  ]]; then
 fi
 
 
-for file in `sudo find $fs -xdev -type f` ; do 
-  inode=`stat $file | grep Inode |awk '{ print $4 }'`
-  hardlinks=`stat $file | grep Inode |awk '{ print $6 }'`
-  name=`stat $file | grep File |awk '{ print $2 }'`
-  [ $hardlinks -ge $max ] && echo $inode $hardlinks $file
-done
+find $fs -xdev -type f > /tmp/findmaxhl$$.txt
+while read file ;do 
+  # file=$line
+  # echo "$file"
+  inode=`stat "$file" | grep Inode |awk '{ print $4 }'`
+  hardlinks=`stat "$file" | grep Inode |awk '{ print $6 }'`
+  name=`stat "$file" | grep File |awk '{ print $2 }'`
+  [ $hardlinks -ge $max ] && echo inode:$inode hardlinks:$hardlinks file:$file	
+done < /tmp/findmaxhl$$.txt
+
+
+rm -f /tmp/findmaxhl$$.txt
