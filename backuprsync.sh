@@ -99,7 +99,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
       backupsrv="$user@$server:" 
     fi
 
-    mkdir -p $savepath/$fservername/latest-$fs $savepath/$fservername/log $savepath/$fservername/$fs-$date
+    mkdir -p $savepath/$fservername/latest-$fs $savepath/$fservername/log
     touch $savepath/reporterror.log
 
     case $type in 
@@ -132,6 +132,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
 
     if [ $exitrsync -eq 0 ]; then
         printf "%s" "cp... "
+        mkdir -p $savepath/$fservername/$fs-$date
         cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>> $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
         if [ $? -ne 0 ]; then
           echo exit 'Exit cp code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
