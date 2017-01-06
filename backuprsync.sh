@@ -110,6 +110,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 -A -H --archive --numeric-ids \
                 $exclude \
                 $ext 2> $savepath/$fservername/log/errors-$fservername-$fs-$date.log
+                exitrsync=$?
         ;;
         "rsync")
             export RSYNC_PASSWORD="$password"
@@ -118,9 +119,10 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 -A -H --archive --numeric-ids \
                 $exclude \
                 $ext 2> $savepath/$fservername/log/errors-$fservername-$fs-$date.log
+            exitrsync=$?
         ;;
     esac
-    if [ $? -ne 0 ]; then
+    if [ $exitrsync -ne 0 ]; then
       echo exit 'Exit rsync code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
       echo "$date rsync error on $fs $backupsrv$backup" >> $savepath/reporterror.log
     fi    
@@ -128,12 +130,15 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     rm -f $savepath/$fservername/latest-$fs/du.txt
     du -s $savepath/$fservername/latest-$fs/ | awk '{ print $1 }'> $savepath/$fservername/latest-$fs/du.txt
 
-
-    printf "%s" "cp... "
-    cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>> $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
-    if [ $? -ne 0 ]; then
-      echo exit 'Exit cp code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
-      echo "$date cp error on $fs $backupsrv$backup" >> $savepath/reporterror.log
+    if [ $exitrsync -eq 0 ]; then
+        printf "%s" "cp... "
+        cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>> $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
+        if [ $? -ne 0 ]; then
+          echo exit 'Exit cp code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
+          echo "$date cp error on $fs $backupsrv$backup" >> $savepath/reporterror.log
+        fi
+    else
+        printf "%s" "rsync exit code: $exitrsync: Not run cp!"
     fi
 
     printf "%s\n" "done. "
