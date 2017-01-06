@@ -137,6 +137,8 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
         if [ $? -ne 0 ]; then
           echo exit 'Exit cp code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
           echo "$date cp error on $fs $backupsrv$backup" >> $savepath/reporterror.log
+        else
+            printf "%s" "cp ok. Path: $savepath/$fservername/$fs-$date. "
         fi
     else
         printf "%s" "rsync exit code: $exitrsync: Not run cp!"
