@@ -1,0 +1,5 @@
+*/.cache/* 
+*/cache/* 
+*/Cache/*
+/var/lib/*/yumdb/*
+/var/lib/docker/*

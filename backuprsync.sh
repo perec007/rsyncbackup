@@ -70,20 +70,6 @@ EOF
 exit 
 }
 
-upsizebackup() {
-    varnm=`echo $1 | sed "s,-,_,g; s/\.//g"`
-    dupath=$2
-    # echo $varnm $dupath
-    touch $savepath/sizebackups.txt
-    size=`du -s $dupath/ | awk '{ print $1 }'`
-    grep -q $varnm $savepath/sizebackups.txt
-    if [ $? -eq 0 ]; then
-        sed -i "s,$varnm=.*,$varnm=$size,g"  $savepath/sizebackups.txt 
-    else
-        echo "$varnm=$size" >> $savepath/sizebackups.txt 
-    fi
-}
-
 
 [[ $help -eq 1 ]] && printhelp
 if [[ "$server" == "" || "$backupfs" == "" || -z $savepath || -z $backupfs || -z $server || -z type ]]; then
@@ -139,8 +125,10 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
       echo "$date rsync error on $fs $backupsrv$backup" >> $savepath/reporterror.log
     fi    
     printf "%s" "du latest-$fs... "
-    upsizebackup $fservername-latest-$fs $savepath/$fservername/latest-$fs/
-    
+    rm -f $savepath/$fservername/latest-$fs/du.txt
+    du -s $savepath/$fservername/latest-$fs/ | awk '{ print $1 }'> $savepath/$fservername/latest-$fs/du.txt
+
+
     printf "%s" "cp... "
     cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>> $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
     if [ $? -ne 0 ]; then
@@ -148,8 +136,6 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
       echo "$date cp error on $fs $backupsrv$backup" >> $savepath/reporterror.log
     fi
 
-    printf "%s" "du $fs-$date... "
-    upsizebackup $fservername-$fs-$date $savepath/$fservername/$fs-$date/
     printf "%s\n" "done. "
 done
 
