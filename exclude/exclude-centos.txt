@@ -6,4 +6,5 @@
 */log/*.log
 */log/*.gz
 *.log
+*_log
 /tmp/*
