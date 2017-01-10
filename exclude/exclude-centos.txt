@@ -3,3 +3,6 @@
 */Cache/*
 /var/lib/*/yumdb/*
 /var/lib/docker/*
+*/log/*.log
+*/log/*.gz
+*.log
