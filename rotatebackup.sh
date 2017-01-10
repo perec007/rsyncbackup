@@ -51,57 +51,55 @@ if [[ "$server" == "" || "$backupfs" == "" || -z $savepath || -z $backupfs || -z
         exit 1
 fi
 
+if [ $backupfs == "/" ]; then
+    fs=root
+else
+    fs=`echo $backupfs | sed "s,/,-,g; s,^-,,g; s,-$,,g"`
+fi
+
+fservername=$server
+[ ! -z $prefix ] && fservername=$prefix-$server
+
 TIMENOW=`date '+%s'`
-DUCACHE_REAL=/tmp/backup-du-l.cache
-DUCACHE_ONHDD=/tmp/backup-du-h.cache
-touch $DUCACHE_REAL
+DUCACHE="/tmp/backup-du-$fs.cache"
+touch $DUCACHE
 let TTLCACHE=60*60*12
 
 ##### CACHE #####
 
-if [ -f /tmp/backup-rotate.lock ]; then
- find /tmp/backup-rotate.lock  -cmin +720 -delete
+if [ -f /tmp/backup-rotate-$fs.lock ]; then
+ find /tmp/backup-rotate-$fs.lock  -cmin +720 -delete
  echo "Locking by lockfile! Sleep 10 min and rerun $0 $@"
  sleep 600
  $0 $@
 fi
 
-if [ -s "${DUCACHE_REAL}" ]; then
-  TIMECACHE=`stat -c"%Z" "${DUCACHE_REAL}"`
+if [ -s "${DUCACHE}" ]; then
+  TIMECACHE=`stat -c"%Z" "${DUCACHE}"`
 else
   TIMECACHE=0
 fi
+
+DATACACHE_FILE="/tmp/backup-du-$fs-$prefix-$fservername.cache.txt"
+DATACACHE_LATEST_FILE="/tmp/backup-du-$fs-$prefix-$fservername.cache_latest.txt"
+
 if [ "$((${TIMENOW} - ${TIMECACHE}))" -gt "${TTLCACHE}" ]; then
-  echo "" >> ${DUCACHE_REAL} 
-  touch /tmp/backup-rotate.lock
-  DATACACHE_REAL=`du --max-depth=2 $savepath` || exit 1
-  DATACACHE_ONHDD=`du -l --max-depth=2 $savepath` || exit 1
-  echo "${DATACACHE_REAL}" > ${DUCACHE_REAL}
-  echo "${DATACACHE_ONHDD}" > ${DUCACHE_ONHDD}
-  rm -f /tmp/backup-rotate.lock
+  echo "" >> ${DUCACHE} 
+  touch /tmp/backup-rotate-$fs.lock
+  DATACACHE=`du -s $savepath/$fservername/latest-$fs $savepath/$fservername/$fs-* | awk '{  sum += $1 }; END { print sum }'` || exit 1
+  DATACACHE_LATEST=`du -s $savepath/$fservername/latest-$fs | awk '{ print $1 }'` || exit 1
+  # DATACACHE=10000
+  # DATACACHE_LATEST=1000000
+  echo "${DATACACHE}" > "${DATACACHE_FILE}" 
+  echo "${DATACACHE_LATEST}" > "${DATACACHE_LATEST_FILE}" 
+
+rm -f /tmp/backup-rotate-$fs.lock
 fi
 
-cat $DUCACHE_REAL | awk  '{ sum += $1 }; END { print "TOTAL ON REAL DISK USED: "sum/1024/1024"Gb" }'
-cat $DUCACHE_ONHDD | awk  '{ sum += $1 }; END { print "TOTAL ON HARDLINKS DISK USED: "sum/1024/1024"Gb" }'
+cat $DATACACHE_FILE | awk  '{ sum += $1 }; END { print "TOTAL ON REAL DISK USED: "sum/1024/1024"Gb" }'
+cat $DATACACHE_LATEST_FILE | awk  '{ sum += $1 }; END { print "TOTAL LATEST DISK USED: "sum/1024/1024"Gb" }'
 
-
-fservername=$server
-[ ! -z $prefix ] && fservername=$prefix-$server
-
-for backup in `echo $backupfs | sed "s/,/\ /g"`; do
-    if [ $backup == "/" ]; then
-        fs=root
-    else
-        fs=`echo $backup | sed "s,/,-,g; s,^-,/,g; s,-$,/,g"`
-    fi
-
-    cat $DUCACHE_ONHDD | grep "$fservername/$fs"| awk -v "bckp=$fservername/$fs" '{ sum += $1 }; END { print "TOTAL USED BACKUP " bckp " : "sum/1024/1024"Gb" }'
-
-    # backups=`ls $savepath/$fservername/$fs-*|grep :$|sed "s/://g; s,.*/,,g"|sort -r`
-    # for i in $backups; do
-    # 	cat $DUCACHE_REAL | grep $i
-    # done
+for cleandir in `echo $savepath/$fservername/$fs-* |sort`; do
+  echo $cleandir
 done
-
-
 

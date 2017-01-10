@@ -123,25 +123,28 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
         ;;
     esac
     if [ $exitrsync -ne 0 ]; then
-      echo exit 'Exit rsync code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
+      echo "Exit rsync code is $exitrsync. Backup name: $fservername/latest-$fs Check Log!" | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
       echo "$date rsync error on $fs $backupsrv$backup" >> $savepath/reporterror.log
     fi    
-    printf "%s" "du latest-$fs... "
-    rm -f $savepath/$fservername/latest-$fs/du.txt
-    du -s $savepath/$fservername/latest-$fs/ | awk '{ print $1 }'> $savepath/$fservername/latest-$fs/du.txt
 
     if [ $exitrsync -eq 0 ]; then
+        printf "%s" "du latest-$fs... "
+        rm -f $savepath/$fservername/latest-$fs/du.txt
+        du -s $savepath/$fservername/latest-$fs/ | awk '{ print $1 }'> $savepath/$fservername/latest-$fs/du.txt || ( echo error du; exit 1 )
+
         printf "%s" "cp... "
         mkdir -p $savepath/$fservername/$fs-$date
+
         cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>> $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
-        if [ $? -ne 0 ]; then
-          echo exit 'Exit cp code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
-          echo "$date cp error on $fs $backupsrv$backup" >> $savepath/reporterror.log
+        if [ $? -eq 0 ]; then
+          printf "%s" "cp ok. Path: $savepath/$fservername/$fs-$date. "
         else
-            printf "%s" "cp ok. Path: $savepath/$fservername/$fs-$date. "
+          echo 'Exit cp code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
+          echo "$date cp error on $fs $backupsrv$backup" >> $savepath/reporterror.log
+          exit 1
         fi
     else
-        printf "%s" "rsync exit code: $exitrsync: Not run cp!"
+        printf "%s" "ERROR: rsync exit code: $exitrsync: Not run cp!  "
     fi
 
     printf "%s\n" "done. "
