@@ -1,0 +1,5 @@
+fservername=$server
+[ -z $prefix ] || fservername=$prefix-$server
+
+date=`date +%F--%H-%M`
+

@@ -70,17 +70,14 @@ EOF
 exit 
 }
 
-
+#check param
 [[ $help -eq 1 ]] && printhelp
 if [[ "$server" == "" || "$backupfs" == "" || -z $savepath || -z $backupfs || -z $server || -z type ]]; then
         echo Need mandatory params! Use --help options.
         exit 1
 fi
 
-fservername=$server
-[ ! -z $prefix ] && fservername=$prefix-$server
-
-date=`date +%F--%H-%M`
+. `dirname @0`/function
 
 for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     if [ $backup == "/" ]; then
@@ -131,6 +128,11 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
         printf "%s" "du latest-$fs... "
         rm -f $savepath/$fservername/latest-$fs/du.txt
         du -s $savepath/$fservername/latest-$fs/ | awk '{ print $1 }'> $savepath/$fservername/latest-$fs/du.txt || ( echo error du; exit 1 )
+        printf "%s" "du all $fs... "
+
+        rm -f $savepath/$fservername/latest-$fs/du-all.txt
+        du -s $savepath/$fservername/$fs-*/ | awk ''{ sum += $1 }; END { print sum }''> $savepath/$fservername/latest-$fs/du-all.txt || ( echo error du; exit 1 )
+        
 
         printf "%s" "cp... "
         mkdir -p $savepath/$fservername/$fs-$date

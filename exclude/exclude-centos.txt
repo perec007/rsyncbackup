@@ -4,7 +4,7 @@
 /var/lib/*/yumdb/*
 /var/lib/docker/*
 */log/*.log
+*/log/*_log
 */log/*.gz
 *.log
-*_log
 /tmp/*
