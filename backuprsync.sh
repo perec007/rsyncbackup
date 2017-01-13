@@ -77,7 +77,7 @@ if [[ "$server" == "" || "$backupfs" == "" || -z $savepath || -z $backupfs || -z
         exit 1
 fi
 
-. `dirname @0`/function
+. `dirname $0`/function
 
 for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     if [ $backup == "/" ]; then
