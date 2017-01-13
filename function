@@ -1,5 +1,13 @@
+date=`date +%F--%H-%M`
+
 fservername=$server
 [ -z $prefix ] || fservername=$prefix-$server
 
-date=`date +%F--%H-%M`
-
+fsname() {
+    if [ $1 == "/" ]; then
+        fs=root
+    else
+        fs=`echo $backup | sed "s,/,-,g; s,^-,,g; s,-$,,g"`
+    fi
+    echo $fs
+}

@@ -80,12 +80,8 @@ fi
 . `dirname $0`/function
 
 for backup in `echo $backupfs | sed "s/,/\ /g"`; do
-    if [ $backup == "/" ]; then
-        fs=root
-    else
-        fs=`echo $backup | sed "s,/,-,g; s,^-,,g; s,-$,,g"`
-    fi
-
+    fs=`fsname $backup`
+    
     printf "%s" "start backup $fs on $fservername:"
     printf "%s" "start type:$type rsync..."
 
