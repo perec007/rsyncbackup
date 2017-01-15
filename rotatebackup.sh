@@ -16,11 +16,11 @@ case $i in
     --prefix=*)
       prefix="${i#*=}"
     ;;
-    --sizebackup=*)
-	  sizebackup="${i#*=}"
+    --sizeback=*)
+	  let sizeback="${i#*=}"*1024*1024
 	  ;;
     --countback=*)
-    countback=="${ i#*=}"
+    countback="${i#*=}"
     ;;
     "--sudo=yes")
       sudo="sudo -E"
@@ -52,7 +52,7 @@ exit
 
 #check params
 [[ $help -eq 1 ]] && printhelp
-if [[ "$server" == "" || "$backupfs" == "" || -z $savepath || -z $backupfs || -z $server || -z type ]]; then
+if [[ ( -z $server || -z $backupfs || -z $savepath || -z $backupfs || -z $server ) ]]; then
         echo Need mandatory params! Use --help options.
         exit 1
 fi
@@ -60,13 +60,50 @@ fi
 
 . `dirname @0`/function
 
-echo start rotate 
-for backup in `echo $backupfs | sed "s/,/\ /g"`; do
-    if [ $backup == "/" ]; then
-        fs=root
-    else
-        fs=`echo $backup | sed "s,/,-,g; s,^-,,g; s,-$,,g"`
-    fi
-    ls $savepath/$fservername/latest-$fs/du.txt $savepath/$fservername/$fs-*/du.txt
 
+for backup in `echo $backupfs | sed "s/,/\ /g"`; do
+    fs=`fsname $backup`
+
+    #rotate by countback
+    if [ ! -z $countback ]; then
+        echo Start rotate by count backups on file system.
+        countback_current=$(echo $savepath/$fservername/$fs-* |tr ' ' \\n|wc -l)
+        if [ "$countback_current" -gt "$countback" ]; then
+            echo Need rotate $countback_current gt $countback
+            let diff=$countback_current-$countback
+
+            for rotate in `echo $savepath/$fservername/$fs-* `; do
+                # echo $rotate
+                if [ "$diff" -gt "0" ]; then
+                    rm -rf $rotate
+                    let diff=$diff-1
+                fi
+            done
+        else
+            echo "Not need rotate backup $fs by countback"
+        fi
+        exit
+    
+
+
+    # rotate by sizeback
+    elif [ ! -z $sizeback ]; then
+        echo Start rotate by SIZE backup on filesystem.
+        cat $savepath/$fservername/latest-$fs/du-all.txt
+        echo $sizeback_current
+
+
+    fi
+    
 done
+
+
+
+
+
+
+
+
+
+
+

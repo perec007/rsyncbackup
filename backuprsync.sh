@@ -79,18 +79,13 @@ fi
 
 . `dirname $0`/function
 
+
 for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     fs=`fsname $backup`
-    
+
     printf "%s" "start backup $fs on $fservername:"
     printf "%s" "start type:$type rsync..."
 
-    if [ $server == "local" ]; then
-      backupsrv="" 
-      type=ssh
-    else
-      backupsrv="$user@$server:" 
-    fi
 
     mkdir -p $savepath/$fservername/latest-$fs $savepath/$fservername/log
     touch $savepath/reporterror.log
@@ -98,7 +93,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     case $type in 
         "ssh")
             $sudo rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
-                -e "ssh -p $port -i $key" --rsync-path="sudo rsync" \
+                -e "ssh -p $port -i $key" \
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids \
                 $exclude \
@@ -117,17 +112,19 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     esac
     if [ $exitrsync -ne 0 ]; then
       echo "Exit rsync code is $exitrsync. Backup name: $fservername/latest-$fs Check Log!" | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
-      echo "$date rsync error on $fs $backupsrv$backup" >> $savepath/reporterror.log
+      echo "$date $fservername rsync error on $backup" >> $savepath/reporterror.log
     fi    
 
     if [ $exitrsync -eq 0 ]; then
         printf "%s" "du latest-$fs... "
         rm -f $savepath/$fservername/latest-$fs/du.txt
-        du -s $savepath/$fservername/latest-$fs/ | awk '{ print $1 }'> $savepath/$fservername/latest-$fs/du.txt || ( echo error du; exit 1 )
+        du -s $savepath/$fservername/latest-$fs/ \
+            | awk '{ print $1 }' > $savepath/$fservername/latest-$fs/du.txt || ( echo error du; exit 1 )
         printf "%s" "du all $fs... "
 
         rm -f $savepath/$fservername/latest-$fs/du-all.txt
-        du -s $savepath/$fservername/$fs-*/ | awk ''{ sum += $1 }; END { print sum }''> $savepath/$fservername/latest-$fs/du-all.txt || ( echo error du; exit 1 )
+        du -s $savepath/$fservername/$fs-*/ $savepath/$fservername/latest-$fs/ \
+            | awk '{ sum += $1 }; END { print sum }' > $savepath/$fservername/latest-$fs/du-all.txt || ( echo error du; exit 1 )
         
 
         printf "%s" "cp... "
@@ -138,7 +135,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
           printf "%s" "cp ok. Path: $savepath/$fservername/$fs-$date. "
         else
           echo 'Exit cp code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
-          echo "$date cp error on $fs $backupsrv$backup" >> $savepath/reporterror.log
+          echo "$date $fservername cp error on $backup" >> $savepath/reporterror.log
           exit 1
         fi
     else

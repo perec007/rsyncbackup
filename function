@@ -11,3 +11,11 @@ fsname() {
     fi
     echo $fs
 }
+
+if [ $server == "local" ]; then
+  backupsrv="" 
+  type=ssh
+else
+  backupsrv="$user@$server:" 
+fi
+
