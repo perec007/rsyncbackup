@@ -12,6 +12,17 @@ fsname() {
     echo $fs
 }
 
+ducount() {
+	path=$1
+	name=$2
+	if [ ! -s $name ]; then 
+		ducount=`du -s $path | awk '{ sum += $1 }; END { print sum }'`
+		[ "$?" -ne "0" ] && exit 1
+		echo $ducount > $name 
+	fi
+}
+
+
 if [ $server == "local" ]; then
   backupsrv="" 
   type=ssh

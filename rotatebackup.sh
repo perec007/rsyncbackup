@@ -83,16 +83,29 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
             echo "Not need rotate backup $fs by countback"
         fi
         exit
-    
+    fi
 
 
     # rotate by sizeback
-    elif [ ! -z $sizeback ]; then
+    if [ ! -z $sizeback ]; then
         echo Start rotate by SIZE backup on filesystem.
-        cat $savepath/$fservername/latest-$fs/du-all.txt
-        echo $sizeback_current
+        ducount "$savepath/$fservername/latest-$fs/ $savepath/$fservername/$fs-* " "$savepath/$fservername/latest-$fs/du-all.txt" 
+        sizeback_current=`cat $savepath/$fservername/latest-$fs/du-all.txt`
+        echo Current catalog size: `echo $sizeback_current | awk '{print $1/1024/1024"GB" }'`
+        if [ "$sizeback_current" -ge "$sizeback" ]; then
+            echo  need rotate
 
 
+            for rotate in `echo $savepath/$fservername/$fs-* `; do
+                ducount "$savepath/$fservername/latest-$fs/" "$savepath/$fservername/latest-$fs/du-all.txt" 
+                sizeback_current=`cat $savepath/$fservername/latest-$fs/du-all.txt`
+                if [ "$sizeback_current" -ge "$sizeback" ]; then
+                    echo rotate $rotate
+                    rm -rf $rotate $savepath/$fservername/latest-$fs/du-all.txt
+                fi
+            done
+
+        fi
     fi
     
 done
