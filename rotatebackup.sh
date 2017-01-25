@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# include config 
+[ -f `dirname @0`/config ] && . `dirname @0`/config
 
 for i in "$@"
 do
@@ -40,7 +42,7 @@ cat << EOF
 params:     need: description:                                         
 -s|--server yes   servername set local if backup localhost filesystem 
 -prefix     no    prefix servername - need to human readable save path
---backupfs  yes   filesystem over coma e.q. /,/boot, if rsync type - backupfs is modulename cfg file                                         
+--backupfs  yes   one filesystem (not coma separated), if rsync type - backupfs is modulename cfg file                                         
 --savepath  yes   path to local backup dir
 --sizeback  no    GB. Max backup size on hard drive. Need if not define countback. 
 --countback no    Count max backups on hard drive. Need if not define sizeback. 
@@ -50,10 +52,11 @@ EOF
 exit 
 }
 
+
 #check params
 [[ $help -eq 1 ]] && printhelp
-if [[ ( -z $server || -z $backupfs || -z $savepath || -z $backupfs || -z $server ) ]]; then
-        echo Need mandatory params! Use --help options.
+if [[ -z $server || -z $backupfs || -z $savepath || -z $backupfs || -z $server || $backupfs == *,* ]]; then
+        echo Need mandatory or error params ! Use --help options.
         exit 1
 fi
 
@@ -66,34 +69,30 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
 
     #rotate by countback
     if [ ! -z $countback ]; then
-        echo Start rotate by count backups on file system $fs
+        printf "%s" "Rotation by COUNT $fs..."
         countback_current=$(echo $savepath/$fservername/$fs-* |tr ' ' \\n|wc -l)
         if [ "$countback_current" -gt "$countback" ]; then
-            echo Need rotate $countback_current gt $countback
             let diff=$countback_current-$countback
 
             for rotate in `echo $savepath/$fservername/$fs-* `; do
-                # echo $rotate
                 if [ "$diff" -gt "0" ]; then
                     rm -rf $rotate
                     let diff=$diff-1
                 fi
             done
+	    printf "%s" "Done!"
         else
-            echo "Not need rotate backup $fs by countback"
+            printf "%s\n" "Not need rotation $fs by COUNT! Total backups: $countback_current."
         fi
     fi
 
 
     # rotate by sizeback
     if [ ! -z $sizeback ]; then
-        echo Start rotate by SIZE backup on filesystem.
+        printf "%s" "Rotation by SIZE $fs..."
         ducount "$savepath/$fservername/latest-$fs/ $savepath/$fservername/$fs-* " "$savepath/$fservername/latest-$fs/du-all.txt" 
         sizeback_current=`cat $savepath/$fservername/latest-$fs/du-all.txt`
-        echo Current catalog size: `echo $sizeback_current | awk '{print $1/1024/1024"GB" }'`
         if [ "$sizeback_current" -ge "$sizeback" ]; then
-            echo  need rotate
-
 
             for rotate in `echo $savepath/$fservername/$fs-* `; do
                 ducount "$savepath/$fservername/latest-$fs/" "$savepath/$fservername/latest-$fs/du-all.txt" 
@@ -103,7 +102,9 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                     rm -rf $rotate $savepath/$fservername/latest-$fs/du-all.txt
                 fi
             done
-
+	    printf "%s" "Done!"
+	else 
+	    printf "%s\n" "Not need rotation $fs by SIZE! Current catalog size: rizeback_currentlog size: `echo $sizeback_current | awk '{print $1/1024/1024"GB" }'`"
         fi
     fi
     

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# include config 
+[ -f `dirname @0`/config ] && . `dirname @0`/config
 
 for i in "$@"
 do
@@ -69,6 +71,8 @@ params:     protocol: need: description:
 EOF
 exit 
 }
+
+
 
 #check param
 [[ $help -eq 1 ]] && printhelp
