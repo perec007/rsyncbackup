@@ -66,7 +66,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
 
     #rotate by countback
     if [ ! -z $countback ]; then
-        echo Start rotate by count backups on file system.
+        echo Start rotate by count backups on file system $fs
         countback_current=$(echo $savepath/$fservername/$fs-* |tr ' ' \\n|wc -l)
         if [ "$countback_current" -gt "$countback" ]; then
             echo Need rotate $countback_current gt $countback
@@ -106,6 +106,8 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
 
         fi
     fi
+    
+    echo
     
 done
 
