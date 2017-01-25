@@ -82,7 +82,6 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
         else
             echo "Not need rotate backup $fs by countback"
         fi
-        exit
     fi
 
 
