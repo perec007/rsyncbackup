@@ -1,6 +1,7 @@
 */.cache/* 
 */cache/* 
 */Cache/*
+/var/spool/postfix/*
 /var/lib/*/yumdb/*
 /var/lib/docker/*
 */log/*.log
