@@ -22,6 +22,9 @@ case $i in
     --exclude=*)
       exclude="--delete-excluded --exclude-from=${i#*=}"
     ;;
+    --include=*)
+      include="--include-from=${i#*=}"
+    ;;
     -t=*|--type=*)
       type="${i#*=}"
     ;;
@@ -40,6 +43,9 @@ case $i in
     "--sudo=yes")
       sudo="sudo -E"
 	;;
+    -ok=*|--okerr=*)
+      okerr="${i#*=}"
+    ;;
     -h|--help)
       help=1
     ;;
@@ -61,9 +67,11 @@ params:     protocol: need: description:
 --password     |rsync no    rsync auth password
 -k|-key     ssh|      yes   ssh key auth                                         
 --backupfs  ssh|rsync yes   filesystem over coma e.q. /,/boot, if rsync type - backupfs is modulename cfg file                                         
---exclude   ssh|rsync no    path file to excludefile                                         
+--exclude   ssh|rsync no    path file to excludefile 
+--include   ssh|rsync no    path file to includefile 
 -e|--ext    ssh|rsync no    external params to rsync
 --savepath  ssh|rsync yes   path to local backup dir
+-ok|--okerr    |rsync no    normal rsync exit code, not 0 
 -h|--help   ssh|rsync no    print this help
 --sudo      ssh|      no    Set yes if need use local sudo rsync
 EOF
@@ -96,7 +104,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 -e "ssh -p $port -i $key" \
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids \
-                $exclude \
+                $exclude $include \
                 $ext 2> $savepath/$fservername/log/errors-$fservername-$fs-$date.log
                 exitrsync=$?
         ;;
@@ -105,11 +113,13 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
             $sudo rsync $backupsrv:$backup $savepath/$fservername/latest-$fs \
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids \
-                $exclude \
+                $exclude $include \
                 $ext 2> $savepath/$fservername/log/errors-$fservername-$fs-$date.log
             exitrsync=$?
         ;;
     esac
+
+    echo $okerr | grep -q $exitrsync && exitrsync=0 # check exit code and fix if ok
     if [ $exitrsync -ne 0 ]; then
       echo "Exit rsync code is $exitrsync. Backup name: $fservername/latest-$fs Check Log!" | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
       echo "$date $fservername rsync error on $backup" >> $savepath/reporterror.log
@@ -118,13 +128,11 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     if [ $exitrsync -eq 0 ]; then
         printf "%s" "du latest-$fs... "
         rm -f $savepath/$fservername/latest-$fs/du.txt
-        du -s $savepath/$fservername/latest-$fs/ \
-            | awk '{ print $1 }' > $savepath/$fservername/latest-$fs/du.txt || ( echo error du; exit 1 )
+        ducount "$savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du.txt"  || ( echo error du; exit 1 )
+        
         printf "%s" "du all $fs... "
-
         rm -f $savepath/$fservername/latest-$fs/du-all.txt
-        du -s $savepath/$fservername/$fs-*/ $savepath/$fservername/latest-$fs/ \
-            | awk '{ sum += $1 }; END { print sum }' > $savepath/$fservername/latest-$fs/du-all.txt || ( echo error du; exit 1 )
+        ducount "$savepath/$fservername/$fs-* $savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du-all.txt" || ( echo error du-all; exit 1 )
         
 
         printf "%s" "cp... "
