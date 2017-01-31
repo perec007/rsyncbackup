@@ -94,13 +94,13 @@ fi
 
 for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     fs=`fsname $backup`
+    zbxalertlog=$savepath/zabbix-alert.log
+    latestfslog=$savepath/$fservername/latest-$fs/errorsbackup.log
 
     printf "%s" "start backup $fs on $fservername:"
     printf "%s" "start type:$type rsync..."
 
-
-    mkdir -p $savepath/$fservername/latest-$fs $savepath/$fservername/log
-    touch $savepath/reporterror.log
+    mkdir -p $savepath/$fservername/latest-$fs
 
     case $type in 
         "ssh")
@@ -109,7 +109,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids \
                 $exclude $include \
-                $ext 2> $savepath/$fservername/log/errors-$fservername-$fs-$date.log
+                $ext 2>&1 | tee -a $latestfslog >> $zbxalertlog
                 exitrsync=$?
         ;;
         "rsync")
@@ -118,15 +118,15 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids \
                 $exclude $include \
-                $ext 2> $savepath/$fservername/log/errors-$fservername-$fs-$date.log
-            exitrsync=$?
+                $ext 2>&1 | tee -a $latestfslog >> $zbxalertlog            
+                exitrsync=$?
         ;;
     esac
 
     echo $okerr | grep -q $exitrsync && exitrsync=0 # check exit code and fix if ok
     if [ $exitrsync -ne 0 ]; then
-      echo "Exit rsync code is $exitrsync. Backup name: $fservername/latest-$fs Check Log!" | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
-      echo "$date $fservername rsync error on $backup" >> $savepath/reporterror.log
+      echo "Exit rsync code is $exitrsync. Backup name: $fservername/latest-$fs Check Log!" | tee -a $latestfslog >> $zbxalertlog  
+      echo "$date $fservername rsync error on $backup" | tee -a $latestfslog >> $zbxalertlog
     fi    
 
     if [ $exitrsync -eq 0 ]; then
@@ -142,16 +142,15 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
         printf "%s" "cp... "
         mkdir -p $savepath/$fservername/$fs-$date
 
-        cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>> $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
-        if [ $? -eq 0 ]; then
+        cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>&1 | tee -a $latestfslog >> $zbxalertlog  
+        exitcp=$?
+        if [ $exitcp -eq 0 ]; then
           printf "%s" "cp ok. Path: $savepath/$fservername/$fs-$date. "
         else
-          echo 'Exit cp code is not 0. Check Log!' | tee -a $savepath/$fservername/log/errors-$fservername-$fs-$date.log 
-          echo "$date $fservername cp error on $backup" >> $savepath/reporterror.log
-          exit 1
+          echo "Exit cp code $exitcp. Check Log!" | tee -a $latestfslog >> $zbxalertlog
         fi
     else
-        printf "%s" "ERROR: rsync exit code: $exitrsync: Not run cp!  "
+        printf "%s" "ERROR: rsync exit code: $exitrsync: Not run cp!"
     fi
 
     printf "%s\n" "done. "
