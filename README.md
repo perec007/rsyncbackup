@@ -1,8 +1,31 @@
-### example use over rsync protocol
-command to start script:
+### Пример резервного копирования. 
+Скрипт резервного копирования запускается через крон каждые сутки в 6 утра. В 8 часов запускается ротирование, которое следит чтобы резервными копиями секции не было занято более 200гб и хранилось не более 60 последних копий.
+```
+0 6 * * * /etc/scripts/rsyncbackup/backuprsync.sh -u=rootbackup -s=serverbackuping \
+    --backupfs=rsyncbackup-root,rsyncbackup-boot -t=rsync  \
+    --exclude=/etc/scripts/rsyncbackup/exclude/exclude-centos.txt 
+0 8 * * *  /etc/scripts/rsyncbackup/rotatebackup.sh -s=serverbackuping --backupfs=rsyncbackup-root --sizeback=200
+0 8 * * *  /etc/scripts/rsyncbackup/rotatebackup.sh -s=serverbackuping --backupfs=rsyncbackup-boot --sizeback=1
+```
+Тут используется файл конфигурации. Он всегда выполняется перед запуском скрипта, в нем можно отразить любые часто используемые параметры. В данном примере файл выглядит следующим образом. 
+```
+[root@backupserver /etc/scripts/rsyncbackup]# cat config
+# This file contain predefined param.
+# If you want to set the correct values, keep this in mind:
+# let sizeback="${i#*=}"*1024*1024
+# sudo="sudo -E"
+# exclude="--delete-excluded --exclude-from=${i#*=}"
+password=XXXXXXXXXXX
+savepath=/srv/rsyncbackup/
+countback=60
+```
 
+### Настройка и резервное копирования по протоколу rsync
+команда для старта
+```
 $ ./backuprsync.sh -u=root -s=CLIENT_IP_OR_FQDN --backupfs=rsyncbackup-root -t=rsync --password=XXXXXX
-### config rsync daemon:
+```
+## настройка демона на сервере который бекапим:
 ***cat /etc/rsyncd.conf***
 
 ```
@@ -33,22 +56,32 @@ hosts deny = *
 root:XXXXXX
 ```
 
-### example use over ssh protocol
+### настройка резервного копирования по протоколу ssh (не рекомендуется)
 command to start:
 
 ```
 ./backuprsync.sh -u=rsyncbackupuser -s=10.20.30.4 -p=22 -k=/root/.ssh/id_rsa --backupfs=/,/srv/docker
 ```
-Need settings:
+Требуемые настройки:
 
 ```
-- on client need create rsyncbackupuser
-- and add sudo permissions to run sudo rsync
-- add open rsa ssh key to auth
+- 
+- необходимо создать пользователя от которого будет происходить резервное копирование
+- добавить возможность этому пользователю запускать rsync через sudo (не требуется если этот пользователь root)
+- настроить авторизацию по ключам 
+```
+
+
+### Ротация бекапов 
+Ротация может происходить как по размеру, так и по количеству.
+```
+/etc/scripts/rsyncbackup/rotatebackup.sh -s=testserver --backupfs=rsyncbackup-root --sizeback=200 --сщгтеифсл=600
 ```
 
 ## help
 
 ```
 ./backuprsync.sh --help
+./rotatebackup.sh --help
 ```
+
