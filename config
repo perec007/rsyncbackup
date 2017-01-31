@@ -1,0 +1,9 @@
+# This file contain predefined param.
+# If you want to set the correct values, keep this in mind:
+# let sizeback="${i#*=}"*1024*1024
+# sudo="sudo -E"
+# exclude="--delete-excluded --exclude-from=${i#*=}"
+
+savepath=/srv/rsyncbackup/
+countback=30
+
