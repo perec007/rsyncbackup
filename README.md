@@ -21,7 +21,7 @@ rsyncbackup - это набор скриптов предназначенный 
 0 8 * * *  /etc/scripts/rsyncbackup/rotatebackup.sh -s=serverbackuping --backupfs=rsyncbackup-root --sizeback=200
 0 8 * * *  /etc/scripts/rsyncbackup/rotatebackup.sh -s=serverbackuping --backupfs=rsyncbackup-boot --sizeback=1
 ```
-Тут используется файл конфигурации. Он всегда выполняется перед запуском скрипта, в нем можно отразить любые часто используемые параметры. В данном примере файл выглядит следующим образом. 
+Тут используется файл конфигурации. Располагается в той же папке что и скрипт резервного копирования, называется config. Он всегда выполняется перед запуском скрипта, в нем можно отразить любые часто используемые параметры. В данном примере файл выглядит следующим образом. 
 ```
 [root@backupserver /etc/scripts/rsyncbackup]# cat config
 # This file contain predefined param.
