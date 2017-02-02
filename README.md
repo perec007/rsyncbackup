@@ -13,15 +13,7 @@ rsyncbackup - это набор скриптов предназначенный 
 ```
 
 ### Пример резервного копирования. 
-Скрипт резервного копирования запускается через крон каждые сутки в 6 утра. В 8 часов запускается ротирование, которое следит чтобы резервными копиями секции не было занято более 200гб и хранилось не более 60 последних копий.
-```
-0 6 * * * /etc/scripts/rsyncbackup/backuprsync.sh -u=rootbackup -s=serverbackuping \
-    --backupfs=rsyncbackup-root,rsyncbackup-boot -t=rsync  \
-    --exclude=/etc/scripts/rsyncbackup/exclude/exclude-centos.txt 
-0 8 * * *  /etc/scripts/rsyncbackup/rotatebackup.sh -s=serverbackuping --backupfs=rsyncbackup-root --sizeback=200
-0 8 * * *  /etc/scripts/rsyncbackup/rotatebackup.sh -s=serverbackuping --backupfs=rsyncbackup-boot --sizeback=1
-```
-Тут используется файл конфигурации. Располагается в той же папке что и скрипт резервного копирования, называется config. Он всегда выполняется перед запуском скрипта, в нем можно отразить любые часто используемые параметры. В данном примере файл выглядит следующим образом. 
+Часто используемые параметры для упрощения записи в cron можно вынести в файл конфируации. Располагается в той же папке что и скрипт резервного копирования, называется config. Файл всегда выполняется перед запуском скрипта, в нем можно отразить любые часто используемые параметры. 
 ```
 [root@backupserver /etc/scripts/rsyncbackup]# cat config
 # This file contain predefined param.
@@ -29,10 +21,20 @@ rsyncbackup - это набор скриптов предназначенный 
 # let sizeback="${i#*=}"*1024*1024
 # sudo="sudo -E"
 # exclude="--delete-excluded --exclude-from=${i#*=}"
-password=XXXXXXXXXXX
+exclude="--exclude-from=/etc/scripts/backup/exclude/exclude-centos.txt --delete-excluded"
+password=Wrojyawpvujnehysho
 savepath=/srv/rsyncbackup/
 countback=60
+type=rsync
+user=root
 ```
+Скрипт резервного копирования запускается через крон каждые сутки в 6 утра. В 8 часов запускается ротирование, которое следит чтобы резервными копиями секции не было занято более 200гб и хранилось не более 60 последних копий. С учетом тех параметров что приводятся выше в файле config записи в cron будут выглядеть следующим образом.
+```
+0 6 * * * /etc/scripts/rsyncbackup/backuprsync.sh -s=serverbackuping --backupfs=rsyncbackup-root,rsyncbackup-boot 
+0 8 * * *  /etc/scripts/rsyncbackup/rotatebackup.sh -s=serverbackuping --backupfs=rsyncbackup-root --sizeback=200
+0 8 * * *  /etc/scripts/rsyncbackup/rotatebackup.sh -s=serverbackuping --backupfs=rsyncbackup-boot --sizeback=1
+```
+
 
 ### Настройка и резервное копирования по протоколу rsync
 команда для старта

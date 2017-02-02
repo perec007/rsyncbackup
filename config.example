@@ -1,9 +1,15 @@
-# This file contain predefined param.
-# If you want to set the correct values, keep this in mind:
-# let sizeback="${i#*=}"*1024*1024
-# sudo="sudo -E"
-# exclude="--delete-excluded --exclude-from=${i#*=}"
+## This file contain predefined param.
+## If you want to set the correct values, keep this in mind:
+## let sizeback="${i#*=}"*1024*1024
+## sudo="sudo -E"
+## exclude="--delete-excluded --exclude-from=${i#*=}"
+## exclude="--exclude-from=/etc/scripts/backup/exclude/exclude-centos.txt --delete-excluded"
 
-savepath=/srv/rsyncbackup/
-countback=30
+
+#Frequently-used options:
+#password=XXXXXXXX
+#countback=30
+#savepath=/srv/rsyncbackup/
+#type=rsync
+#user=root
 
