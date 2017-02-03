@@ -83,6 +83,9 @@ exit
 
 
 [[ $help -eq 1 ]] && printhelp
+#if backup localfs - need use format command rsync of ssh
+[[ "$type" == "local" ]] && type=ssh
+
 
 #check params
 for i in "$backupfs"  "$savepath" "$backupfs" "$server" "$type"
@@ -105,7 +108,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     latestfslog=$savepath/$fservername/latest-$fs/errorsbackup.log
 
     printf "%s" "start backup $fs on $fservername:"
-    printf "%s" "start type:$type rsync..."
+    printf "%s" "type:$type. Start rsync..."
 
     mkdir -p $savepath/$fservername/latest-$fs
 

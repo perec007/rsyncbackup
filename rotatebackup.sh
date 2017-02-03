@@ -114,7 +114,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
             done
 	    printf "%s" "Done!"
 	else 
-	    printf "%s\n" "Not need rotation $fs by SIZE! Current catalog size: rizeback_currentlog size: `echo $sizeback_current | awk '{print $1/1024/1024"GB" }'`"
+	    printf "%s\n" "Not need rotation $fs by SIZE! Current catalog size: `echo $sizeback_current | awk '{print $1/1024/1024"GB" }'`"
         fi
     fi
     
