@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # include config 
-[ -f `dirname @0`/config ] && . `dirname @0`/config
+[ -f `dirname $0`/config ] && . `dirname $0`/config
 zbxalertlog=$savepath/zabbix-alert.log
 
 for i in "$@"
@@ -66,7 +66,7 @@ params:     protocol: need: description:
 -u|--user   ssh|rsync yes   username (if remote)                                         
 -s|--server ssh|rsync yes   servername set local if backup localhost filesystem 
 -prefix     ssh|rsync no    prefix servername - need to human readable save path
--p|--port   ssh|      yes   if remote; ssh or rsyncd port                                            
+-p|--port   ssh|rsync no    if remote; ssh or rsyncd port                                            
 --password     |rsync no    rsync auth password
 -k|-key     ssh|      yes   ssh key auth                                         
 --backupfs  ssh|rsync yes   filesystem over coma e.q. /,/boot, if rsync type - backupfs is modulename cfg file                                         
@@ -100,6 +100,8 @@ done
 
 
 
+
+
 . `dirname $0`/function
 
 
@@ -112,23 +114,30 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
 
     mkdir -p $savepath/$fservername/latest-$fs
 
-    case $type in 
+
+   [[ "$type" == "rsync" && "$port" != "" ]] && backupsrv="rsync://$user@$server:$port/"
+   [[ "$type" == "rsync" && "$port" == "" ]] && backupsrv="rsync://$user@$server/"
+   [[ "$type" == "ssh" ]]   && backupsrv="$user@$server:"
+   [[ "$type" == "local" ]] && ( backupsrv=""; type="ssh" )
+
+   case $type in 
         "ssh")
+            port="-p $port"
             $sudo rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
-                -e "ssh -p $port -i $key" \
+                -e "ssh $port -i $key" \
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids \
                 $exclude $include \
-                $ext 2>&1 | tee -a $latestfslog >> $zbxalertlog
+                $ext | tee -a $latestfslog >> $zbxalertlog
                 exitrsync=$?
         ;;
         "rsync")
             export RSYNC_PASSWORD="$password"
-            $sudo rsync $backupsrv:$backup $savepath/$fservername/latest-$fs \
+            $sudo rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids \
                 $exclude $include \
-                $ext 2>&1 | tee -a $latestfslog >> $zbxalertlog            
+                $ext | tee -a $latestfslog >> $zbxalertlog            
                 exitrsync=$?
         ;;
     esac
