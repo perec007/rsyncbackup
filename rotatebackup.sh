@@ -55,11 +55,11 @@ exit
 [[ $help -eq 1 ]] && printhelp
 
 #check params
-for i in "$server" "$backupfs" "$savepath" "$backupfs" "$server"
+for i in "$server" "$backupfs" "$savepath" "$backupfs" 
 do
     cnt=$((cnt+1))
     if [[ "$i" == ""  ]]; then
-        echo Mandatory param $cnt is empty. Need params: "backupfs savepath backupfs server type" 
+        echo Mandatory param $cnt is empty. Need params: "server backupfs savepath backupfs" 
         exit 1
     fi
 done
