@@ -2,7 +2,6 @@
 
 # include config 
 [ -f `dirname $0`/config ] && . `dirname $0`/config
-zbxalertlog=$savepath/zabbix-alert.log
 
 for i in "$@"
 do
@@ -107,6 +106,7 @@ done
 
 for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     fs=`fsname $backup`
+    zbxalertlog=$savepath/zabbix-alert.log
     latestfslog=$savepath/$fservername/latest-$fs/errorsbackup.log
 
     printf "%s" "start backup $fs on $fservername:"
