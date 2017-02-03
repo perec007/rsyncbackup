@@ -52,11 +52,20 @@ EOF
 exit 
 }
 
+[[ $help -eq 1 ]] && printhelp
 
 #check params
-[[ $help -eq 1 ]] && printhelp
-if [[ -z $server || -z $backupfs || -z $savepath || -z $backupfs || -z $server || $backupfs == *,* ]]; then
-        echo Need mandatory or error params ! Use --help options.
+for i in "$server" "$backupfs" "$savepath" "$backupfs" "$server"
+do
+    cnt=$((cnt+1))
+    if [[ "$i" == ""  ]]; then
+        echo Mandatory param $cnt is empty. Need params: "backupfs savepath backupfs server type" 
+        exit 1
+    fi
+done
+
+if [[ $backupfs == *,* ]]; then
+        echo This script only works with one file system at a time.
         exit 1
 fi
 

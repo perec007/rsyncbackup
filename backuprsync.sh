@@ -2,6 +2,7 @@
 
 # include config 
 [ -f `dirname @0`/config ] && . `dirname @0`/config
+zbxalertlog=$savepath/zabbix-alert.log
 
 for i in "$@"
 do
@@ -81,20 +82,26 @@ exit
 }
 
 
-
-#check param
 [[ $help -eq 1 ]] && printhelp
-if [[ "$server" == "" || "$backupfs" == "" || -z $savepath || -z $backupfs || -z $server || -z type ]]; then
-        echo Need mandatory params! Use --help options.
+
+#check params
+for i in "$backupfs"  "$savepath" "$backupfs" "$server" "$type"
+do
+    cnt=$((cnt+1))
+    if [[ "$i" == ""  ]]; then
+        echo Mandatory param $cnt is empty. Need params: "backupfs savepath backupfs server type" 
         exit 1
-fi
+    fi
+done
+
+
+
 
 . `dirname $0`/function
 
 
 for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     fs=`fsname $backup`
-    zbxalertlog=$savepath/zabbix-alert.log
     latestfslog=$savepath/$fservername/latest-$fs/errorsbackup.log
 
     printf "%s" "start backup $fs on $fservername:"
