@@ -82,8 +82,6 @@ exit
 
 
 [[ $help -eq 1 ]] && printhelp
-#if backup localfs - need use format command rsync of ssh
-[[ "$type" == "local" ]] && type=ssh
 
 
 #check params
@@ -118,8 +116,9 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
    [[ "$type" == "rsync" && "$port" != "" ]] && backupsrv="rsync://$user@$server:$port/"
    [[ "$type" == "rsync" && "$port" == "" ]] && backupsrv="rsync://$user@$server/"
    [[ "$type" == "ssh" ]]   && backupsrv="$user@$server:"
-   [[ "$type" == "local" ]] && ( backupsrv=""; type="ssh" )
+   [[ "$type" == "local" || "$server" == "local" ]] && backupsrv="" && type="ssh"
 
+   
    case $type in 
         "ssh")
             port="-p $port"
