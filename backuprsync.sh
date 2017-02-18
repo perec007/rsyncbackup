@@ -68,7 +68,7 @@ params:     protocol: need: description:
 -p|--port   ssh|rsync no    if remote; ssh or rsyncd port                                            
 --password     |rsync no    rsync auth password
 -k|-key     ssh|      yes   ssh key auth                                         
---backupfs  ssh|rsync yes   filesystem over coma e.q. /,/boot, if rsync type - backupfs is modulename cfg file                                         
+--backupfs  ssh|rsync yes   filesystem over coma e.q. /,/boot, if rsync type - backupfs is modulename cfg file
 --exclude   ssh|rsync no    path file to excludefile 
 --include   ssh|rsync no    path file to includefile 
 -e|--ext    ssh|rsync no    external params to rsync
@@ -104,8 +104,9 @@ done
 
 for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     fs=`fsname $backup`
-    zbxalertlog=$savepath/zabbix-alert.log
-    latestfslog=$savepath/$fservername/latest-$fs/errorsbackup.log
+    logzbx=$savepath/zabbix-alert.log
+    logbackup=$savepath/$fservername/latest-$fs/errorsbackup.log
+    logglobal=$savepath/errorsbackup.log
 
     printf "%s" "start backup $fs on $fservername:"
     printf "%s" "type:$type. Start rsync..."
@@ -127,8 +128,9 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids \
                 $exclude $include \
-                $ext | tee -a $latestfslog >> $zbxalertlog
+                $ext >> /tmp/$$.log  2>&1 
                 exitrsync=$?
+                mv -f /tmp/$$.log $logbackup 
         ;;
         "rsync")
             export RSYNC_PASSWORD="$password"
@@ -136,39 +138,36 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids \
                 $exclude $include \
-                $ext | tee -a $latestfslog >> $zbxalertlog            
+                $ext >> /tmp/$$.log  2>&1 
                 exitrsync=$?
+                mv -f /tmp/$$.log $logbackup 
         ;;
     esac
 
     echo $okerr | grep -q $exitrsync && exitrsync=0 # check exit code and fix if ok
-    if [ $exitrsync -ne 0 ]; then
-      echo "Exit rsync code is $exitrsync. Backup name: $fservername/latest-$fs Check Log!" | tee -a $latestfslog >> $zbxalertlog  
-      echo "$date $fservername rsync error on $backup" | tee -a $latestfslog >> $zbxalertlog
-    fi    
+    [ $exitrsync -ne 0 ] && \
+    echo "Error: Exit rsync code: $exitrsync: see log $logbackup"  | tee -a $logglobal >> $logzbx  
 
     if [ $exitrsync -eq 0 ]; then
         printf "%s" "du latest-$fs... "
         rm -f $savepath/$fservername/latest-$fs/du.txt
-        ducount "$savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du.txt"  || ( echo error du; exit 1 )
-        
+        ducount "$savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du.txt"  
+       
         printf "%s" "du all $fs... "
         rm -f $savepath/$fservername/latest-$fs/du-all.txt
-        ducount "$savepath/$fservername/$fs-* $savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du-all.txt" || ( echo error du-all; exit 1 )
+        ducount "$savepath/$fservername/$fs-* $savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du-all.txt" 
         
 
         printf "%s" "cp... "
         mkdir -p $savepath/$fservername/$fs-$date
 
-        cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>&1 | tee -a $latestfslog >> $zbxalertlog  
+        cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>&1 >> $logbackup   
         exitcp=$?
-        if [ $exitcp -eq 0 ]; then
-          printf "%s" "cp ok. Path: $savepath/$fservername/$fs-$date. "
-        else
-          echo "Exit cp code $exitcp. Check Log!" | tee -a $latestfslog >> $zbxalertlog
-        fi
+        [ $exitcp -ne 0 ] && echo "Error: Exit cp code: $exitcp: see log $logbackup"  | tee -a $logglobal >> $logzbx 
+        
     else
         printf "%s" "ERROR: rsync exit code: $exitrsync: Not run cp!"
+        echo "cp not run see log $logbackup"  | tee -a $logglobal >> $logzbx 
     fi
 
     printf "%s\n" "done. "
