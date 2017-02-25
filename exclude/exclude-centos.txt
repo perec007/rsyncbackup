@@ -1,5 +1,5 @@
-*/.cache/* 
-*/cache/* 
+*/.cache/*
+*/cache/*
 */Cache/*
 /var/spool/postfix/*
 /var/lib/*/yumdb/*

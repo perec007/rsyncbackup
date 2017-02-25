@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# include config 
-[ -f `dirname @0`/config ] && . `dirname @0`/config
+dir=`dirname $0`
+
+# include config
+[ -f $dir/config ] && . $dir/config
 
 for i in "$@"
 do
