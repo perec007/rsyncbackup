@@ -1,6 +1,7 @@
 #!/bin/bash
 
 dir=`dirname $0`
+cd $dir
 
 # include config
 [ -f $dir/config ] && . $dir/config
