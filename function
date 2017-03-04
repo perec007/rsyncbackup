@@ -16,7 +16,7 @@ ducount() {
 	path=$1
 	name=$2
 	if [ ! -s $name ]; then 
-		ducount=`du -s $path | awk '{ sum += $1 }; END { print sum }'`
+		ducount=`du -s $path 2>/dev/null | awk '{ sum += $1 }; END { print sum }'`
 		[ "$?" -ne "0" ] && exit 1
 		echo $ducount > $name 
 	fi

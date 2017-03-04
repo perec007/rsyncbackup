@@ -161,15 +161,14 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
         
 
     printf "%s" "cp... "
-    mkdir -p $savepath/$fservername/$fs-$date
-
     if [ $exitrsync -eq 0 ]; then
         dst_path=$fs-$date
     else
-        dst_path=$fs-err-$date
+        dst_path=$fs-$date-err
     fi
     
-    cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$dst_path/ >> $logbackup 2>&1  
+    mkdir -p $savepath/$fservername/$dst_path
+    cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$dst_path/ >> $logbackup 2>&1
     exitcp=$?
     [ $exitcp -ne 0 ] && echo "Error: Exit cp code: $exitcp: see log $logbackup"  | tee -a $logglobal >> $logzbx 
         
