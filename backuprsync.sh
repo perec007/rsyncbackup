@@ -151,27 +151,28 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     [ $exitrsync -ne 0 ] && \
     echo "Error: Exit rsync code: $exitrsync: see log $logbackup"  | tee -a $logglobal >> $logzbx  
 
-    if [ $exitrsync -eq 0 ]; then
-        printf "%s" "du latest-$fs... "
-        rm -f $savepath/$fservername/latest-$fs/du.txt
-        ducount "$savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du.txt"  
+    printf "%s" "du latest-$fs... "
+    rm -f $savepath/$fservername/latest-$fs/du.txt
+    ducount "$savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du.txt"  
        
-        printf "%s" "du all $fs... "
-        rm -f $savepath/$fservername/latest-$fs/du-all.txt
-        ducount "$savepath/$fservername/$fs-* $savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du-all.txt" 
+    printf "%s" "du all $fs... "
+    rm -f $savepath/$fservername/latest-$fs/du-all.txt
+    ducount "$savepath/$fservername/$fs-* $savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du-all.txt" 
         
 
-        printf "%s" "cp... "
-        mkdir -p $savepath/$fservername/$fs-$date
+    printf "%s" "cp... "
+    mkdir -p $savepath/$fservername/$fs-$date
 
-        cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>&1 >> $logbackup   
-        exitcp=$?
-        [ $exitcp -ne 0 ] && echo "Error: Exit cp code: $exitcp: see log $logbackup"  | tee -a $logglobal >> $logzbx 
-        
+    if [ $exitrsync -eq 0 ]; then
+        dst_path=$fs-$date
     else
-        printf "%s" "ERROR: rsync exit code: $exitrsync: Not run cp!"
-        echo "cp not run see log $logbackup"  | tee -a $logglobal >> $logzbx 
+        dst_path=$fs-err-$date
     fi
+    
+    cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$dst_path/ >> $logbackup 2>&1  
+    exitcp=$?
+    [ $exitcp -ne 0 ] && echo "Error: Exit cp code: $exitcp: see log $logbackup"  | tee -a $logglobal >> $logzbx 
+        
 
     printf "%s\n" "done. "
 done
