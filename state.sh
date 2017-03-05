@@ -11,8 +11,8 @@ for i in `ls */latest*/du.txt` ; do
   
 	srvname=`echo $i |sed "s,/.*, ," | cut -d ' ' -f 1`
 	fsname=`echo $i |sed "s,/, ,g"|cut -d ' ' -f 2 `
-  	du=`cat $srvname/$fsname/du.txt` ; let dugb=$du/1000/1000
-  	duall=`cat $srvname/$fsname/du-all.txt` ; let duallgb=$duall/1000/1000
+  	du=`cat $srvname/$fsname/du.txt` ; dugb=`bc <<< "scale=2; $du/1000/1000"|sed 's/^\./0./'`
+  	duall=`cat $srvname/$fsname/du-all.txt` ; duallgb=`bc <<< "scale=2; $duall/1000/1000"|sed 's/^\./0./'`
   	echo "$srvname $fsname du: $dugb GB; du-all: $duallgb GB"
 done
 
