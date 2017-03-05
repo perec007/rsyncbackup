@@ -149,7 +149,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
 
     echo $okerr | grep -q $exitrsync && exitrsync=0 # check exit code and fix if ok
     [ $exitrsync -ne 0 ] && \
-    echo "Error: Exit rsync code: $exitrsync: see log $logbackup"  | tee -a $logglobal >> $logzbx  
+    echo "`date` Error: Exit rsync code: $exitrsync: see log $logbackup"  | tee -a $logglobal >> $logzbx  
 
     printf "%s" "du latest-$fs... "
     rm -f $savepath/$fservername/latest-$fs/du.txt
@@ -170,7 +170,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     mkdir -p $savepath/$fservername/$dst_path
     cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$dst_path/ >> $logbackup 2>&1
     exitcp=$?
-    [ $exitcp -ne 0 ] && echo "Error: Exit cp code: $exitcp: see log $logbackup"  | tee -a $logglobal >> $logzbx 
+    [ $exitcp -ne 0 ] && echo "`date` Error: Exit cp code: $exitcp: see log $logbackup"  | tee -a $logglobal >> $logzbx 
         
 
     printf "%s\n" "done. "
