@@ -46,8 +46,8 @@ case $i in
       prefix="${i#*=}"
     ;;
     "--sudo=yes")
-      sudo="sudo -E"
-	;;
+      export sudo="sudo -E"
+    ;;
     -ok=*|--okerr=*)
       okerr="${i#*=}"
     ;;
@@ -60,6 +60,7 @@ case $i in
     ;;
 esac
 done
+
 
 printhelp() {
 cat << EOF
@@ -88,7 +89,7 @@ exit
 
 
 #check params
-for i in "$backupfs"  "$savepath" "$backupfs" "$server" "$type"
+for i in "$backupfs"  "$savepath" "$backupfs" "$server" "$type" 
 do
     cnt=$((cnt+1))
     if [[ "$i" == ""  ]]; then
@@ -97,7 +98,10 @@ do
     fi
 done
 
-
+if [[ "$type" == "ssh" && -z "$key" ]]; then
+	echo If use type=ssh - mandatory "key" param!
+	exit 1
+fi
 
 
 
@@ -126,13 +130,25 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
    case $type in 
         "ssh")
             port="-p $port"
-            $sudo rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
+	    if [[ -z $sudo ]]; then  
+              rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
                 -e "ssh $port -i $key" \
                 --one-file-system --delete \
                 -A -H --archive --numeric-ids \
                 $exclude $include \
                 $ext >> /tmp/$$.log  2>&1 
                 exitrsync=$?
+            else 
+              $sudo \
+                rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
+                --rsync-path="sudo rsync" \
+                -e "ssh $port -i $key" \
+                --one-file-system --delete \
+                -A -H --archive --numeric-ids \
+                $exclude $include \
+                $ext >> /tmp/$$.log  2>&1 
+                exitrsync=$?
+            fi
                 mv -f /tmp/$$.log $logbackup 
         ;;
         "rsync")
