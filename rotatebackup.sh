@@ -108,11 +108,11 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
         if [ "$sizeback_current" -ge "$sizeback" ]; then
 
             for rotate in `echo $savepath/$fservername/$fs-* `; do
-                ducount "$savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du-all.txt" 
+                ducount "$savepath/$fservername/latest-$fs $savepath/$fservername/$fs-*" "$savepath/$fservername/latest-$fs/du-all.txt" 
                 sizeback_current=`cat $savepath/$fservername/latest-$fs/du-all.txt`
                 if [ "$sizeback_current" -ge "$sizeback" ]; then
                     echo rotate $rotate
-                    rm -rf $rotate $savepath/$fservername/latest-$fs/du-all.txt
+                    rm -rf $rotate $savepath/$fservername/latest-$fs/du-all.txt $rotate
                 fi
             done
 	    printf "%s" "Done!"
