@@ -1,6 +1,7 @@
 #!/bin/bash
 
 dir=`dirname $0`
+$rsyncpram="--one-file-system --delete -HAX --partial --stats --numeric-ids"
 
 # include config
 [ -f $dir/config ] && . $dir/config
@@ -127,9 +128,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
             port="-p $port"
             $sudo rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
                 -e "ssh $port -i $key" \
-                --one-file-system --delete \
-                -A -H --archive --numeric-ids \
-                $exclude $include \
+                $rsyncparam $exclude $include \
                 $ext >> /tmp/$$.log  2>&1 
                 exitrsync=$?
                 mv -f /tmp/$$.log $logbackup 
@@ -137,9 +136,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
         "rsync")
             export RSYNC_PASSWORD="$password"
             $sudo rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
-                --one-file-system --delete \
-                -A -H --archive --numeric-ids \
-                $exclude $include \
+                $rsyncparam $exclude $include \
                 $ext >> /tmp/$$.log  2>&1 
                 exitrsync=$?
                 mv -f /tmp/$$.log $logbackup 
