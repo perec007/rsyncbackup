@@ -4,7 +4,10 @@ dir=`dirname $0`
 cd $dir
 
 # include config
-[ -f $dir/config ] && . $dir/config
+if [ -f $dir/config ]; then
+	source <(grep = $dir/config)
+fi
+	 
 
 for i in "$@"
 do
