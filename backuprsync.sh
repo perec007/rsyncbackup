@@ -1,6 +1,8 @@
 #!/bin/bash
 
 dir=`dirname $0`
+cd $dir
+
 $rsyncpram="--one-file-system --delete -HAX --partial --stats --numeric-ids"
 
 # include config
@@ -46,8 +48,8 @@ case $i in
       prefix="${i#*=}"
     ;;
     "--sudo=yes")
-      sudo="sudo -E"
-	;;
+      export sudo="sudo -E"
+    ;;
     -ok=*|--okerr=*)
       okerr="${i#*=}"
     ;;
@@ -60,6 +62,7 @@ case $i in
     ;;
 esac
 done
+
 
 printhelp() {
 cat << EOF
@@ -88,7 +91,7 @@ exit
 
 
 #check params
-for i in "$backupfs"  "$savepath" "$backupfs" "$server" "$type"
+for i in "$backupfs"  "$savepath" "$backupfs" "$server" "$type" 
 do
     cnt=$((cnt+1))
     if [[ "$i" == ""  ]]; then
@@ -97,7 +100,10 @@ do
     fi
 done
 
-
+if [[ "$type" == "ssh" && -z "$key" ]]; then
+	echo If use type=ssh - mandatory "key" param!
+	exit 1
+fi
 
 
 
@@ -126,11 +132,23 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
    case $type in 
         "ssh")
             port="-p $port"
-            $sudo rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
+	    if [[ -z $sudo ]]; then  
+              rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
                 -e "ssh $port -i $key" \
                 $rsyncparam $exclude $include \
                 $ext >> /tmp/$$.log  2>&1 
                 exitrsync=$?
+            else 
+              $sudo \
+                rsync $backupsrv$backup $savepath/$fservername/latest-$fs \
+                --rsync-path="sudo rsync" \
+                -e "ssh $port -i $key" \
+                --one-file-system --delete \
+                -A -H --archive --numeric-ids \
+                $exclude $include \
+                $ext >> /tmp/$$.log  2>&1 
+                exitrsync=$?
+            fi
                 mv -f /tmp/$$.log $logbackup 
         ;;
         "rsync")
@@ -145,29 +163,29 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
 
     echo $okerr | grep -q $exitrsync && exitrsync=0 # check exit code and fix if ok
     [ $exitrsync -ne 0 ] && \
-    echo "Error: Exit rsync code: $exitrsync: see log $logbackup"  | tee -a $logglobal >> $logzbx  
+    echo "`date` Error: Exit rsync code: $exitrsync: see log $logbackup"  | tee -a $logglobal >> $logzbx  
 
-    if [ $exitrsync -eq 0 ]; then
-        printf "%s" "du latest-$fs... "
-        rm -f $savepath/$fservername/latest-$fs/du.txt
-        ducount "$savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du.txt"  
+    printf "%s" "du latest-$fs... "
+    rm -f $savepath/$fservername/latest-$fs/du.txt
+    ducount "$savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du.txt"  
        
-        printf "%s" "du all $fs... "
-        rm -f $savepath/$fservername/latest-$fs/du-all.txt
-        ducount "$savepath/$fservername/$fs-* $savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du-all.txt" 
+    printf "%s" "du all $fs... "
+    rm -f $savepath/$fservername/latest-$fs/du-all.txt
+    ducount "$savepath/$fservername/$fs-* $savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du-all.txt" 
         
 
-        printf "%s" "cp... "
-        mkdir -p $savepath/$fservername/$fs-$date
-
-        cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$fs-$date/ 2>&1 >> $logbackup   
-        exitcp=$?
-        [ $exitcp -ne 0 ] && echo "Error: Exit cp code: $exitcp: see log $logbackup"  | tee -a $logglobal >> $logzbx 
-        
+    printf "%s" "cp... "
+    if [ $exitrsync -eq 0 ]; then
+        dst_path=$fs-$date
     else
-        printf "%s" "ERROR: rsync exit code: $exitrsync: Not run cp!"
-        echo "cp not run see log $logbackup"  | tee -a $logglobal >> $logzbx 
+        dst_path=$fs-$date-err
     fi
+    
+    mkdir -p $savepath/$fservername/$dst_path
+    cp --link --archive $savepath/$fservername/latest-$fs/* $savepath/$fservername/$dst_path/ >> $logbackup 2>&1
+    exitcp=$?
+    [ $exitcp -ne 0 ] && echo "`date` Error: Exit cp code: $exitcp: see log $logbackup"  | tee -a $logglobal >> $logzbx 
+        
 
     printf "%s\n" "done. "
 done
