@@ -1,3 +1,4 @@
+[global]
 ## This file contain predefined param.
 ## If you want to set the correct values, keep this in mind:
 ## let sizeback="${i#*=}"*1024*1024

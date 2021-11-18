@@ -6,7 +6,10 @@ cd $dir
 $rsyncpram="--one-file-system --delete -HAX --partial --stats --numeric-ids"
 
 # include config
-[ -f $dir/config ] && . $dir/config
+if [ -f $dir/config ]; then
+	source <(grep = $dir/config)
+fi
+	 
 
 for i in "$@"
 do

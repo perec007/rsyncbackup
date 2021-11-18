@@ -102,7 +102,7 @@ command to start:
 ### Ротация бекапов 
 Ротация может происходить как по размеру, так и по количеству.
 ```
-/etc/scripts/rsyncbackup/rotatebackup.sh -s=testserver --backupfs=rsyncbackup-root --sizeback=200 --сщгтеифсл=600
+/etc/scripts/rsyncbackup/rotatebackup.sh -s=testserver --backupfs=rsyncbackup-root --sizeback=200 --countback=600
 ```
 
 ## help
