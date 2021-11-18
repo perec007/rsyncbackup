@@ -113,6 +113,12 @@ fi
 
 . `dirname $0`/function
 
+if [[ -z $ducount_on_rotate ]]; then
+    echo "Отсутствует параметр ducount_on_rotate."
+    echo "задаем по умолчанию ducount_on_rotate=0"
+    ducount_on_rotate=0
+fi
+
 
 for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     fs=`fsname $backup`
@@ -168,14 +174,15 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
     [ $exitrsync -ne 0 ] && \
     echo "`date` Error: Exit rsync code: $exitrsync: see log $logbackup"  | tee -a $logglobal >> $logzbx  
 
-    printf "%s" "du latest-$fs... "
-    rm -f $savepath/$fservername/latest-$fs/du.txt
-    ducount "$savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du.txt"  
-       
-    printf "%s" "du all $fs... "
-    rm -f $savepath/$fservername/latest-$fs/du-all.txt
-    ducount "$savepath/$fservername/$fs-* $savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du-all.txt" 
-        
+    if [[ $ducount_on_rotate != 0 ]]; then
+        printf "%s" "du latest-$fs... "
+        rm -f $savepath/$fservername/latest-$fs/du.txt
+        ducount "$savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du.txt"  
+           
+        printf "%s" "du all $fs... "
+        rm -f $savepath/$fservername/latest-$fs/du-all.txt
+        ducount "$savepath/$fservername/$fs-* $savepath/$fservername/latest-$fs" "$savepath/$fservername/latest-$fs/du-all.txt" 
+    fi
 
     printf "%s" "cp... "
     if [ $exitrsync -eq 0 ]; then

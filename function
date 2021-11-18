@@ -20,6 +20,7 @@ ducount() {
 		[ "$?" -ne "0" ] && exit 1
 		echo $ducount > $name 
 	fi
+	 
 }
 
 
