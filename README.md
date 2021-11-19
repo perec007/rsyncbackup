@@ -31,7 +31,7 @@ cd /etc/scripts; git pull
 # sudo="sudo -E"
 # exclude="--delete-excluded --exclude-from=${i#*=}"
 exclude="--exclude-from=/etc/scripts/backup/exclude/exclude-centos.txt --delete-excluded"
-password=XXXXXXXXXXXXXXXXX
+password=XXXXXXXXXXXXXX
 savepath=/srv/rsyncbackup/
 countback=60
 type=rsync
@@ -116,7 +116,7 @@ command to start:
 ### Мониторинг и логирование
 В заббикс необходимо импортировать xml шаблон из этой папки. Чтобы своевременно понимать что во время одной из резервных копий что-то пошло не так создается log файл в папке резервной копии с названием errorsbackup.log, этот же текст дублируется через tee по пути $savepath/zabbix-alert.log
 
-Для автодискавери на сервере заббикса нужно указать параметр
+Для автодискавери нужно скопировать файл `discovery_error_backup_log.sh` и указать его путь заббикс-агенту на серевере резервного копирования:
 ```
 UserParameter=backup_error_srv_log,/etc/zabbix/scripts/discovery_error_backup_log.sh 
 ```
