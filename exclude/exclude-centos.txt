@@ -9,3 +9,4 @@
 */log/*.gz
 *.log
 /tmp/*
+/var/log/*

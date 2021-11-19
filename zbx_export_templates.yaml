@@ -1,0 +1,45 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-11-19T14:13:35Z'
+  groups:
+    -
+      name: 'Custom Templates'
+  templates:
+    -
+      template: 'Template RsyncBackup Server'
+      name: 'Template RsyncBackup Server'
+      groups:
+        -
+          name: 'Custom Templates'
+      items:
+        -
+          name: 'file report backup exists'
+          key: 'vfs.file.exists[{$REPOTBACKUPFILEPATH}]'
+          delay: 5m
+          request_method: POST
+          triggers:
+            -
+              expression: '{last()}=1'
+              name: 'Check backup log file {$REPOTBACKUPFILEPATH}'
+              priority: AVERAGE
+              description: 'to disable alert - rm logfle {$REPOTBACKUPFILEPATH}'
+              manual_close: 'YES'
+      discovery_rules:
+        -
+          name: 'Discovery log files'
+          key: backup_error_srv_log
+          delay: 10m
+          item_prototypes:
+            -
+              name: 'log file {#BACKUPS}'
+              key: 'vfs.file.exists[{#BACKUPS}]'
+              delay: 10m
+              trigger_prototypes:
+                -
+                  expression: '{last()}>0'
+                  name: 'Backup error! File found {#BACKUPS}'
+                  priority: AVERAGE
+      macros:
+        -
+          macro: '{$REPOTBACKUPFILEPATH}'
+          value: /srv/rsyncbackup/zabbix-alert.log

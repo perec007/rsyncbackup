@@ -3,7 +3,7 @@
 dir=`dirname $0`
 cd $dir
 
-$rsyncpram="--one-file-system --delete -HAX --partial --stats --numeric-ids"
+rsyncparam="--one-file-system --delete -HAX --partial --stats --numeric-ids -r -a -z"
 
 # include config
 if [ -f $dir/config ]; then
@@ -135,11 +135,11 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
    [[ "$type" == "rsync" && "$port" != "" ]] && backupsrv="rsync://$user@$server:$port/"
    [[ "$type" == "rsync" && "$port" == "" ]] && backupsrv="rsync://$user@$server/"
    [[ "$type" == "ssh" ]]   && backupsrv="$user@$server:"
-   [[ "$type" == "local" || "$server" == "local" ]] && backupsrv="" && type="ssh"
+   [[ "$type" == "local" || "$server" == "local" ]] && backupsrv=""
 
    
    case $type in 
-        "ssh")
+        "ssh"|"local")
             port="-p $port"
 	    if [[ -z $sudo ]]; then  
               rsync $backupsrv$backup $savepath/$fservername/latest-$fs \

@@ -81,7 +81,7 @@ for backup in `echo $backupfs | sed "s/,/\ /g"`; do
 
     #rotate by countback
     if [ ! -z $countback ]; then
-        printf "%s" "Rotation by COUNT $fs..."
+        printf "%s" "Rotation backup by COUNT SRV:$fservername FS:$fs..."
         countback_current=$(echo $savepath/$fservername/$fs-* |tr ' ' \\n|wc -l)
         if [ "$countback_current" -gt "$countback" ]; then
             let diff=$countback_current-$countback
